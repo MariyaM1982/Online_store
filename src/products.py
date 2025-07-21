@@ -5,6 +5,7 @@ class Product:
         self.price = price
         self.quantity = quantity
 
+
 class Category:
     category_count = 0
     product_count = 0

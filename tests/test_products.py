@@ -1,5 +1,4 @@
-
-from src.products import Product, Category
+from src.products import Category, Product
 
 
 def test_product_initialization():
@@ -9,12 +8,14 @@ def test_product_initialization():
     assert product.price == 1500.0
     assert product.quantity == 5
 
+
 def test_category_initialization():
     category = Category("Electronics", "Devices and gadgets.")
     assert category.name == "Electronics"
     assert category.description == "Devices and gadgets."
     assert category.products == []
     assert Category.category_count == 1
+
 
 def test_add_product_to_category():
     category = Category("Electronics", "Devices and gadgets.")
@@ -27,7 +28,9 @@ def test_add_product_to_category():
     assert category.get_product_count() == 2
     assert Category.product_count == 2
 
+
 if __name__ == "__main__":
+
     def run_tests():
         test_product_initialization()
         test_category_initialization()
