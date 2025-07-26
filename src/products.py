@@ -2,14 +2,14 @@ class Product:
     def __init__(self, name, description, price, quantity):
         self.name = name
         self.description = description
-        self._price = None  # Приватный атрибут для хранения цены
+        self.__price = None  # Приватный атрибут для хранения цены
         self.price = price  # Используем сеттер для установки начальной цены
         self.quantity = quantity
 
     @property
     def price(self):
         """Геттер для получения цены товара."""
-        return self._price
+        return self.__price
 
     @price.setter
     def price(self, value):
@@ -17,7 +17,7 @@ class Product:
         if value <= 0:
             print("Цена не должна быть нулевая или отрицательная")
         else:
-            self._price = value  # Установка новой цены, если она положительная
+            self.__price = value  # Установка новой цены, если она положительная
 
     @classmethod
     def new_product(cls, product_info, existing_products=None):
