@@ -21,13 +21,6 @@ class Product:
 
     @classmethod
     def new_product(cls, product_info, existing_products=None):
-        """
-        Создает новый продукт или обновляет существующий, если уже есть продукт с таким именем.
-
-        :param product_info: Словарь с параметрами товара (name, description, price, quantity).
-        :param existing_products: Список существующих продуктов для проверки дубликатов.
-        :return: Экземпляр класса Product.
-        """
         if existing_products is None:
             existing_products = []
 
@@ -36,56 +29,83 @@ class Product:
         product_price = product_info.get("price")
         product_quantity = product_info.get("quantity")
 
-        # Проверка на существование товара с таким же именем
         for existing_product in existing_products:
             if existing_product.name == product_name:
-                # Обновляем количество и выбираем максимальную цену
                 existing_product.quantity += product_quantity
                 existing_product.price = max(existing_product.price, product_price)
-                return existing_product  # Возвращаем обновленный продукт
+                return existing_product
 
-        # Если товара с таким именем не существует, создаем новый
         return cls(product_name, product_description, product_price, product_quantity)
+
+    def __str__(self):
+        """Возвращает строковое представление продукта."""
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+
+    def __add__(self, other):
+        """Возвращает общую стоимость двух продуктов."""
+        if isinstance(other, Product):
+            total_value_self = self.price * self.quantity
+            total_value_other = other.price * other.quantity
+            return total_value_self + total_value_other
+        return NotImplemented  # Возвращаем NotImplemented, если операция невозможна
 
 
 class Category:
-    category_count = 0  # Общий счетчик категорий
-    product_count = 0  # Общий счетчик продуктов
+    category_count = 0
+    product_count = 0
 
     def __init__(self, name, description, l):
-        # self._Category__products = None
-        self._Category__products = None
         self.name = name
         self.description = description
         self.__products = []  # Приватный атрибут для хранения списка продуктов
-        Category.category_count += 1  # Увеличиваем счетчик категорий
+        Category.category_count += 1
 
     def add_product(self, product):
-        if isinstance(product, Product):  # Проверка типа продукта
-            self.__products.append(product)  # Добавляет продукт в список
-            Category.product_count += 1  # Увеличиваем счетчик продуктов
+        if isinstance(product, Product):
+            self.__products.append(product)
+            Category.product_count += 1
         else:
             raise ValueError("Только объекты класса Product могут быть добавлены.")
 
     @property
     def products(self):
         """Геттер для получения списка продуктов в формате строки."""
-        if not self.__products:  # Проверяем, пустой ли список
+        if not self.__products:
             return "Нет продуктов в категории."
 
-        products_list = []
-        for product in self.__products:
-            product_info = (
-                f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт."
-            )
-            products_list.append(product_info)
+        return "\n".join(str(product) for product in self.__products)
 
-        return "\n".join(products_list)  # Возвращаем продукты в формате строки
+    def __iter__(self):
+        """Возвращает итератор для перебора продуктов в категории."""
+        return ProductIterator(self)
 
     @classmethod
     def get_product_count(cls):
-        return cls.product_count  # Метод для получения общего количества продуктов
+        return cls.product_count
 
     @classmethod
     def get_category_count(cls):
-        return cls.category_count  # Метод для получения общего количества категорий
+        return cls.category_count
+
+    def __str__(self):
+        """Возвращает строковое представление категории."""
+        total_quantity = sum(product.quantity for product in self.__products)
+        return f"{self.name}, количество продуктов: {total_quantity} шт."
+
+
+class ProductIterator:
+    def __init__(self, category):
+        self.category = category
+        self.index = 0  # Начальный индекс для итерации
+
+    def __iter__(self):
+        """Возвращает сам итератор."""
+        return self
+
+    def __next__(self):
+        """Возвращает следующий продукт в категории."""
+        if self.index < len(self.category._Category__products):
+            product = self.category._Category__products[self.index]
+            self.index += 1
+            return product
+        raise StopIteration  # Завершение итерации
