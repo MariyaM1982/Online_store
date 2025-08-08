@@ -50,11 +50,41 @@ class Product:
         return NotImplemented  # Возвращаем NotImplemented, если операция невозможна
 
 
+class Smartphone(Product):
+    def __init__(
+        self, name, description, price, quantity, efficiency, model, memory, color
+    ):
+        super().__init__(name, description, price, quantity)
+        self.efficiency = efficiency
+        self.model = model
+        self.memory = memory
+        self.color = color
+
+    def __str__(self):
+        base_str = super().__str__()
+        return f"{base_str}, Модель: {self.model}, Эффективность: {self.efficiency}, Память: {self.memory} ГБ, Цвет: {self.color}"
+
+
+class LawnGrass(Product):
+    def __init__(
+        self, name, description, price, quantity, country, germination_period, color
+    ):
+        super().__init__(name, description, price, quantity)
+        self.country = country
+        self.germination_period = germination_period
+        self.color = color
+
+    def __str__(self):
+        base_str = super().__str__()
+        return f"{base_str}, Страна-производитель: {self.country}, Срок прорастания: {self.germination_period} дн., Цвет: {self.color}"
+
+
 class Category:
     category_count = 0
     product_count = 0
 
     def __init__(self, name, description, l):
+        self.l = l
         self.name = name
         self.description = description
         self.__products = []  # Приватный атрибут для хранения списка продуктов
@@ -65,7 +95,13 @@ class Category:
             self.__products.append(product)
             Category.product_count += 1
         else:
-            raise ValueError("Только объекты класса Product могут быть добавлены.")
+            raise TypeError(
+                f"Невозможно добавить объект типа {type(product).__name__}. Ожидается Product или его наследник."
+            )
+
+    def __str__(self):
+        product_list = "\n".join(str(product) for product in self.products)
+        return f"Категория: {self.name}\nПродукты:\n{product_list if product_list else 'Нет продуктов'}"
 
     @property
     def products(self):
