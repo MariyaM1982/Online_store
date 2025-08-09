@@ -43,7 +43,7 @@ class Product:
 
     def __add__(self, other):
         """Возвращает общую стоимость двух продуктов."""
-        if isinstance(other, Product):
+        if type(other) is Product:
             total_value_self = self.price * self.quantity
             total_value_other = other.price * other.quantity
             return total_value_self + total_value_other
