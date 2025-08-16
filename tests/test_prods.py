@@ -1,93 +1,214 @@
 import unittest
 
-from src.products import Category, LawnGrass, Product, Smartphone
+from src.products import (
+    BaseEntity,
+    BaseProduct,
+    Category,
+    CreationInfoMixin,
+    LawnGrass,
+    Order,
+    Product,
+    ProductIterator,
+    Smartphone,
+)
 
 
-class TestProduct(unittest.TestCase):
+class TestStore(unittest.TestCase):
+
     def setUp(self):
-        """Создает экземпляры для использования в тестах."""
-        self.product = Product("Товар 1", "Описание товара 1", 100, 50)
-
-    def test_initialization(self):
-        """Проверяет правильно ли инициализируются атрибуты товара."""
-        self.assertEqual(self.product.name, "Товар 1")
-        self.assertEqual(self.product.description, "Описание товара 1")
-        self.assertEqual(self.product.price, 100)
-        self.assertEqual(self.product.quantity, 50)
-
-    def test_price_setter_valid(self):
-        """Проверяет установку положительной цены."""
-        self.product.price = 150
-        self.assertEqual(self.product.price, 150)
-
-    def test_price_setter_invalid(self):
-        """Проверяет установку отрицательной цены."""
-        with self.assertRaises(ValueError) as context:
-            self.product.price = -50
-        self.assertEqual(
-            str(context.exception), "Цена не должна быть нулевая или отрицательная"
-        )
-
-    def test_str_representation(self):
-        """Проверяет строковое представление товара."""
-        self.assertEqual(str(self.product), "Товар 1, 100 руб. Остаток: 50 шт.")
-
-    def test_addition(self):
-        """Проверяет сложение стоимости двух товаров."""
-        product2 = Product("Товар 2", "Описание товара 2", 200, 30)
-        total = self.product + product2
-        self.assertEqual(total, (100 * 50) + (200 * 30))
-
-
-class TestSmartphone(unittest.TestCase):
-    def setUp(self):
-        """Создает экземпляр смартфона для тестов."""
+        """Настройка необходимых объектов для тестов."""
         self.smartphone = Smartphone(
-            "Смартфон 1",
-            "Описание смартфона 1",
-            30000,
-            10,
-            "Высокая",
-            "Модель X",
-            64,
-            "Чёрный",
+            "iPhone 13",
+            "Смартфон от Apple",
+            80000,
+            5,
+            "A15 Bionic",
+            "iPhone 13",
+            128,
+            "Черный",
+        )
+        self.grass = LawnGrass(
+            "Газонная трава",
+            "Смешанная трава для газонов",
+            1500,
+            20,
+            "Россия",
+            14,
+            "Зеленый",
+        )
+        self.existing_products = [self.smartphone]
+
+    def test_product_creation(self):
+        """Тест для проверки создания продукта."""
+        self.assertIsInstance(self.smartphone, Product)
+        self.assertEqual(self.smartphone.name, "iPhone 13")
+
+    def test_product_string(self):
+        """Тест для проверки корректного отображения строки продукта."""
+        self.assertEqual(
+            str(self.smartphone),
+            "Продукт: iPhone 13, Описание: Смартфон от Apple, Цена: 80000, Количество: 5",
         )
 
-    def test_str_representation(self):
-        """Проверяет строковое представление смартфона."""
-        expected_str = "Смартфон 1, 30000 руб. Остаток: 10 шт., Модель: Модель X, Эффективность: Высокая, Память: 64 ГБ, Цвет: Чёрный"
-        self.assertEqual(str(self.smartphone), expected_str)
+    def test_product_price_setter(self):
+        """Тест для проверки установщика цены."""
+        self.smartphone.price = 75000
+        self.assertEqual(self.smartphone.price, 75000)
+
+    def test_product_price_setter_negative(self):
+        """Тест для проверки установщика цены с отрицательным значением."""
+        self.smartphone.price = -100
+        self.assertEqual(self.smartphone.price, 75000)  # Не должно измениться
+
+    def test_product_new_product_creates_new(self):
+        """Тест для проверки метода new_product - создание нового продукта."""
+        product_info = {
+            "name": "Samsung Galaxy S21",
+            "description": "Смартфон от Samsung",
+            "price": 70000,
+            "quantity": 10,
+        }
+        new_product = Product.new_product(product_info, self.existing_products)
+        self.assertIsInstance(new_product, Smartphone)
+        self.assertEqual(new_product.name, "Samsung Galaxy S21")
+
+    def test_product_new_product_updates_existing(self):
+        """Тест для проверки метода new_product - обновление существующего продукта."""
+        product_info = {
+            "name": "iPhone 13",
+            "description": "Смартфон от Apple",
+            "price": 80000,
+            "quantity": 3,
+        }
+        updated_product = Product.new_product(product_info, self.existing_products)
+        self.assertEqual(updated_product.quantity, 8)  # Количество должно увеличиться
+        self.assertEqual(updated_product.price, 80000)  # Цена должна остаться той же
+
+    def test_product_addition(self):
+        """Тест для проверки перегрузки оператора +."""
+        total_value = self.smartphone + self.grass
+        expected_value = (self.smartphone.price * self.smartphone.quantity) + (
+            self.grass.price * self.grass.quantity
+        )
+        self.assertEqual(total_value, expected_value)
+
+    def test_smartphone_string(self):
+        """Тест для проверки строки смартфона."""
+        self.smartphone.price = 80000  # Убедимся, что цена корректная
+        self.assertEqual(
+            str(self.smartphone),
+            "Продукт: iPhone 13, Описание: Смартфон от Apple, Цена: 80000, Количество: 5",
+        )
+
+    def test_lawn_grass_string(self):
+        """Тест для проверки строки газонной травы."""
+        self.assertEqual(
+            str(self.grass),
+            "Продукт: Газонная трава, Описание: Смешанная трава для газонов, Цена: 1500, Количество: 20",
+        )
+
+    def test_lawn_grass_creation(self):
+        """Тест для проверки создания газонной травы."""
+        self.assertIsInstance(self.grass, LawnGrass)
+
+    def test_lawn_grass_initial_attributes(self):
+        """Тест для проверки атрибутов газонной травы."""
+        self.assertEqual(self.grass.country, "Россия")
+        self.assertEqual(self.grass.germination_period, 14)
+        self.assertEqual(self.grass.color, "Зеленый")
+
+        class TestOrder(unittest.TestCase):
+            def setUp(self):
+                self.product = Product("iPhone 13", "Смартфон от Apple", 80000, 5)
+                self.order = Order(self.product, 3)
+
+            def test_order_creation(self):
+                self.assertEqual(self.order.product, self.product)
+                self.assertEqual(self.order.quantity, 3)
+                self.assertEqual(self.order.total_cost, 240000)
+
+            def test_order_string(self):
+                self.assertEqual(
+                    str(self.order),
+                    "Заказ: iPhone 13, Количество: 3, Итоговая стоимость: 240000 руб.",
+                )
+
+            def test_order_invalid_product(self):
+                with self.assertRaises(TypeError):
+                    Order("непродукт", 3)
 
 
-class TestLawnGrass(unittest.TestCase):
+class TestOrder(unittest.TestCase):
     def setUp(self):
-        """Создает экземпляр газона для тестов."""
-        self.lawn_grass = LawnGrass(
-            "Газон 1", "Описание газона 1", 500, 20, "Россия", 10, "Зелёный"
+        self.product = Product("iPhone 13", "Смартфон от Apple", 80000, 5)
+        self.order = Order(self.product, 3)
+
+    def test_order_creation(self):
+        self.assertEqual(self.order.product, self.product)
+        self.assertEqual(self.order.quantity, 3)
+        self.assertEqual(self.order.total_cost, 240000)
+
+    def test_order_string(self):
+        self.assertEqual(
+            str(self.order),
+            "Заказ: iPhone 13, Количество: 3, Итоговая стоимость: 240000 руб.",
         )
 
-    def test_str_representation(self):
-        """Проверяет строковое представление газона."""
-        expected_str = "Газон 1, 500 руб. Остаток: 20 шт., Страна-производитель: Россия, Срок прорастания: 10 дн., Цвет: Зелёный"
-        self.assertEqual(str(self.lawn_grass), expected_str)
+    def test_order_invalid_product(self):
+        with self.assertRaises(TypeError):
+            Order("непродукт", 3)
 
 
 class TestCategory(unittest.TestCase):
     def setUp(self):
-        """Создает экземпляр категории для тестов."""
-        self.category = Category("Электроника", "Описание электроники", [])
-        self.product = Product("Тестовый продукт", 10.0, 10, 500)
+        self.category = Category("Смартфоны", "Категория для смартфонов", [])
+        self.product1 = Product("iPhone 13", "Смартфон от Apple", 80000, 5)
+        self.product2 = Product("Samsung Galaxy S21", "Смартфон от Samsung", 70000, 10)
+
+    def test_category_creation(self):
+        self.assertEqual(self.category.name, "Смартфоны")
+        self.assertEqual(self.category.description, "Категория для смартфонов")
+        self.assertEqual(Category.get_category_count(), 1)
 
     def test_add_product(self):
-        """Проверяет добавление продукта в категорию."""
-        self.category.add_product(self.category)
-        self.assertEqual(Category.get_product_count(), 0)  # должно вызывать ошибку
+        self.category.add_product(self.product1)
+        self.assertIn(self.product1, self.category._Category__products)
+        self.assertEqual(Category.get_product_count(), 1)
 
     def test_add_invalid_product(self):
-        """Проверяет, что не удастся добавить не-продукт."""
         with self.assertRaises(TypeError):
-            self.category.add_product("Неправильный тип")
+            self.category.add_product("непродукт")
 
-    def test_str_representation(self):
-        """Проверяет строковое представление категории."""
-        self.assertEqual(str(self.category), "Электроника, количество продуктов: 0 шт.")
+    def test_products_string(self):
+        self.category.add_product(self.product1)
+        self.category.add_product(self.product2)
+        self.assertIn("iPhone 13", str(self.category))
+        self.assertIn("Samsung Galaxy S21", str(self.category))
+
+    def test_products_property(self):
+        self.category.add_product(self.product1)
+        self.category.add_product(self.product2)
+        products_string = self.category.products
+        self.assertIn("iPhone 13", products_string)
+        self.assertIn("Samsung Galaxy S21", products_string)
+
+    def test_empty_products_string(self):
+        self.assertEqual(self.category.products, "Нет продуктов в категории.")
+
+
+class TestProductIterator(unittest.TestCase):
+    def setUp(self):
+        self.category = Category("Смартфоны", "Категория для смартфонов", [])
+        self.product1 = Product("iPhone 13", "Смартфон от Apple", 80000, 5)
+        self.product2 = Product("Samsung Galaxy S21", "Смартфон от Samsung", 70000, 10)
+        self.category.add_product(self.product1)
+        self.category.add_product(self.product2)
+
+    def test_iterator(self):
+        products = [product for product in self.category]
+        self.assertEqual(products, [self.product1, self.product2])
+
+    def test_iterator_empty(self):
+        empty_category = Category("Пустая категория", "Нет продуктов", [])
+        products = list(empty_category)
+        self.assertEqual(products, [])

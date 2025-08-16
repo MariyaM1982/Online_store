@@ -1,10 +1,32 @@
-class Product:
+from abc import ABC, abstractmethod
+
+
+class BaseProduct(ABC):
+    @abstractmethod
     def __init__(self, name, description, price, quantity):
         self.name = name
         self.description = description
-        self.__price = None  # Приватный атрибут для хранения цены
-        self.price = price  # Используем сеттер для установки начальной цены
+        self.price = price
         self.quantity = quantity
+
+    @abstractmethod
+    def __str__(self):
+        pass
+
+
+class CreationInfoMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        print(
+            f"Создан объект класса {self.__class__.__name__} с параметрами: {args}, {kwargs}"
+        )
+
+
+class Product(CreationInfoMixin, BaseProduct):
+    def __init__(self, name, description, price, quantity):
+        super().__init__(name, description, price, quantity)
+        self.price = price  # Используем сеттер для установки начальной цены
+        # self.quantity = quantity
 
     @property
     def price(self):
@@ -18,6 +40,9 @@ class Product:
             print("Цена не должна быть нулевая или отрицательная")
         else:
             self.__price = value  # Установка новой цены, если она положительная
+
+    def __str__(self):
+        return f"Продукт: {self.name}, Описание: {self.description}, Цена: {self.price}, Количество: {self.quantity}"
 
     @classmethod
     def new_product(cls, product_info, existing_products=None):
@@ -61,8 +86,7 @@ class Smartphone(Product):
         self.color = color
 
     def __str__(self):
-        base_str = super().__str__()
-        return f"{base_str}, Модель: {self.model}, Эффективность: {self.efficiency}, Память: {self.memory} ГБ, Цвет: {self.color}"
+        return f"{super().__str__()}, Процессор: {self.processor}, Модель: {self.model}, Память: {self.memory}GB, Цвет: {self.color}"
 
 
 class LawnGrass(Product):
@@ -70,16 +94,36 @@ class LawnGrass(Product):
         self, name, description, price, quantity, country, germination_period, color
     ):
         super().__init__(name, description, price, quantity)
+        self.length = None
         self.country = country
         self.germination_period = germination_period
         self.color = color
 
     def __str__(self):
-        base_str = super().__str__()
-        return f"{base_str}, Страна-производитель: {self.country}, Срок прорастания: {self.germination_period} дн., Цвет: {self.color}"
+        return f"{super().__str__()}, Страна: {self.country}, Длина: {self.length} см, Цвет: {self.color}"
 
 
-class Category:
+class BaseEntity(ABC):
+    @abstractmethod
+    def __str__(self):
+        pass
+
+
+class Order(BaseEntity):
+    def __init__(self, product, quantity):
+        if not isinstance(product, Product):
+            raise TypeError(
+                f"Ожидается объект типа Product, получен {type(product).__name__}."
+            )
+        self.product = product
+        self.quantity = quantity
+        self.total_cost = product.price * quantity
+
+    def __str__(self):
+        return f"Заказ: {self.product.name}, Количество: {self.quantity}, Итоговая стоимость: {self.total_cost} руб."
+
+
+class Category(BaseEntity):
     category_count = 0
     product_count = 0
 
@@ -100,8 +144,7 @@ class Category:
             )
 
     def __str__(self):
-        product_list = "\n".join(str(product) for product in self.products)
-        return f"Категория: {self.name}\nПродукты:\n{product_list if product_list else 'Нет продуктов'}"
+        return f"Категория: {self.name}, Описание: {self.description}, Продукты: {', '.join([p.name for p in self.products])}"
 
     @property
     def products(self):
