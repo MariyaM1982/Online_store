@@ -212,3 +212,61 @@ class TestProductIterator(unittest.TestCase):
         empty_category = Category("Пустая категория", "Нет продуктов", [])
         products = list(empty_category)
         self.assertEqual(products, [])
+
+
+class TestProductQuantityValidation(unittest.TestCase):
+    def test_zero_quantity_raises_error(self):
+        """Тест проверки валидации нулевого количества товара"""
+        with self.assertRaises(ValueError):
+            Product("Товар", "Описание", 100, 0)
+
+    def test_negative_quantity_raises_error(self):
+        """Тест проверки валидации отрицательного количества товара"""
+        with self.assertRaises(ValueError):
+            Product("Товар", "Описание", 100, -5)
+
+    def test_positive_quantity_works(self):
+        """Тест проверки корректной работы с положительным количеством"""
+        product = Product("Товар", "Описание", 100, 10)
+        self.assertEqual(product.quantity, 10)
+
+
+class TestCategoryAveragePrice(unittest.TestCase):
+    def setUp(self):
+        self.category = Category("Тестовая категория", "Описание категории", [])
+        self.product1 = Product("Продукт 1", "Описание 1", 100, 5)
+        self.product2 = Product("Продукт 2", "Описание 2", 200, 3)
+        self.product3 = Product("Продукт 3", "Описание 3", 150, 2)
+
+    def test_average_price_empty_category(self):
+        """Тест проверки средней цены для пустой категории"""
+        self.assertEqual(self.category.get_average_price(), 0.0)
+
+    def test_average_price_single_product(self):
+        """Тест проверки средней цены для одной позиции"""
+        self.category.add_product(self.product1)
+        self.assertEqual(self.category.get_average_price(), 100.0)
+
+    def test_average_price_multiple_products(self):
+        """Тест проверки средней цены для нескольких позиций"""
+        self.category.add_product(self.product1)
+        self.category.add_product(self.product2)
+        self.category.add_product(self.product3)
+
+        # Расчет ожидаемого результата: (100 + 200 + 150) / 3 = 150
+        self.assertEqual(self.category.get_average_price(), 150.0)
+
+    def test_average_price_with_different_quantities(self):
+        """Тест проверки средней цены с учетом разного количества"""
+        # Здесь проверяем, что количество не влияет на расчет средней цены
+        self.category.add_product(self.product1)  # 100
+        self.category.add_product(self.product2)  # 200
+        self.category.add_product(self.product3)  # 150
+
+        # Расчет: (100 + 200 + 150) / 3 = 150
+        self.assertEqual(self.category.get_average_price(), 150.0)
+
+    def test_average_price_with_zero_division(self):
+        """Тест проверки обработки деления на ноль"""
+        # Категория изначально пустая
+        self.assertEqual(self.category.get_average_price(), 0.0)

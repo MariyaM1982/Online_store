@@ -24,6 +24,9 @@ class CreationInfoMixin:
 
 class Product(CreationInfoMixin, BaseProduct):
     def __init__(self, name, description, price, quantity):
+        # Добавляем проверку на нулевое количество
+        if quantity <= 0:
+            raise ValueError("Товар с нулевым количеством не может быть добавлен")
         super().__init__(name, description, price, quantity)
         self.price = price  # Используем сеттер для установки начальной цены
         # self.quantity = quantity
@@ -143,6 +146,18 @@ class Category(BaseEntity):
                 f"Невозможно добавить объект типа {type(product).__name__}. Ожидается Product или его наследник."
             )
 
+    def get_average_price(self):
+        try:
+            if not self.__products:
+                raise ZeroDivisionError("В категории нет товаров")
+
+            total_price = sum(product.price for product in self.__products)
+            average_price = total_price / len(self.__products)
+            return average_price
+
+        except ZeroDivisionError:
+            return 0.0
+
     def __str__(self):
         return f"Категория: {self.name}, Описание: {self.description}, Продукты: {', '.join([p.name for p in self.products])}"
 
@@ -170,6 +185,9 @@ class Category(BaseEntity):
         """Возвращает строковое представление категории."""
         total_quantity = sum(product.quantity for product in self.__products)
         return f"{self.name}, количество продуктов: {total_quantity} шт."
+
+    def middle_price(self):
+        pass
 
 
 class ProductIterator:
